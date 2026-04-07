@@ -1,4 +1,5 @@
 import argparse
+<<<<<<< HEAD
 from datetime import datetime
 import os
 
@@ -7,17 +8,38 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import geopandas as gpd
+=======
+import os
+from datetime import datetime
+
+import geopandas as gpd
+import matplotlib
+import matplotlib.pyplot as plt
+>>>>>>> 0b6ef74 (Updated project files)
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
 from utilities import (
+<<<<<<< HEAD
     insert_points_by_time,
     out_dir,
     create_allowed_area,
     build_circular_concentration_area,
 )
 
+=======
+    build_circular_concentration_area,
+    create_allowed_area,
+    insert_points_by_time,
+    out_dir,
+)
+
+matplotlib.use("Agg")
+
+DEFAULT_WORKING_EPSG = "EPSG:31983"
+
+>>>>>>> 0b6ef74 (Updated project files)
 parser = argparse.ArgumentParser(
     description="Generate spatiotemporal points within allowed areas"
 )
@@ -47,6 +69,7 @@ parser.add_argument(
     ),
 )
 
+<<<<<<< HEAD
 DEFAULT_WORKING_EPSG = "EPSG:31983"  # SIRGAS 2000 / UTM 23S (comum em SP)
 
 
@@ -62,6 +85,12 @@ def add_north_arrow(ax, size_frac=0.1, pad_frac=0.02):
         Fração da altura do mapa usada pela seta.
     pad_frac : float
         Afastamento da borda.
+=======
+
+def add_north_arrow(ax, size_frac=0.1, pad_frac=0.02):
+    """
+    Add a simple north arrow to the upper-right corner of the map.
+>>>>>>> 0b6ef74 (Updated project files)
     """
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
@@ -100,6 +129,7 @@ def add_north_arrow(ax, size_frac=0.1, pad_frac=0.02):
 
 def add_scalebar(ax, length_m=1000, location=(0.5, 0.01), height_frac=0.01):
     """
+<<<<<<< HEAD
     Adiciona uma barra de escala em metros.
 
     Parameters
@@ -112,6 +142,9 @@ def add_scalebar(ax, length_m=1000, location=(0.5, 0.01), height_frac=0.01):
         Posição relativa (fração do eixo) da origem da barra.
     height_frac : float
         Espessura vertical em fração da altura.
+=======
+    Add a scale bar in meters.
+>>>>>>> 0b6ef74 (Updated project files)
     """
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
@@ -157,7 +190,11 @@ def add_scalebar(ax, length_m=1000, location=(0.5, 0.01), height_frac=0.01):
 
 def add_map_legend(ax):
     """
+<<<<<<< HEAD
     Cria uma legenda básica para área permitida e pontos gerados.
+=======
+    Create a basic legend for allowed area and generated points.
+>>>>>>> 0b6ef74 (Updated project files)
     """
     legend_elements = [
         Patch(
@@ -193,9 +230,12 @@ def main():
     output_path = "output/"
     out_dir(output_path)
 
+<<<<<<< HEAD
     # ============================
     # Leitura e CRS do shapefile principal
     # ============================
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     if not os.path.exists(args.shapefile_main):
         raise FileNotFoundError(
             f"Main file not found: {args.shapefile_main}"
@@ -204,33 +244,53 @@ def main():
     main_shape = gpd.read_file(args.shapefile_main)
     if main_shape.crs is None:
         print(
+<<<<<<< HEAD
             f"⚠️  CRS não definido no shapefile principal. "
+=======
+            "CRS nao definido no shapefile principal. "
+>>>>>>> 0b6ef74 (Updated project files)
             f"Definindo como {DEFAULT_WORKING_EPSG}."
         )
         main_shape.set_crs(DEFAULT_WORKING_EPSG, inplace=True)
     working_crs = main_shape.crs
 
+<<<<<<< HEAD
     # ============================
     # Processamento de exclusões (opcional)
     # ============================
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     if args.exclusion_shapefiles and args.exclusion_shapefiles != [""]:
         exclusions = [
             gpd.read_file(excl).to_crs(working_crs)
             for excl in args.exclusion_shapefiles
             if os.path.exists(excl)
         ]
+<<<<<<< HEAD
         print("🔹 Iniciando processamento de exclusões...")
         allowed_area = create_allowed_area(main_shape, exclusions)
     else:
         print(
             "⚠️  Nenhum shapefile de exclusão fornecido. "
             "Usando toda a área do shapefile principal."
+=======
+        print("Iniciando processamento de exclusoes.")
+        allowed_area = create_allowed_area(main_shape, exclusions)
+    else:
+        print(
+            "Nenhum shapefile de exclusao fornecido. "
+            "Usando toda a area do shapefile principal."
+>>>>>>> 0b6ef74 (Updated project files)
         )
         allowed_area = main_shape.copy()
 
     if allowed_area.crs is None:
         print(
+<<<<<<< HEAD
             f"⚠️  CRS de allowed_area indefinido. "
+=======
+            "CRS de allowed_area indefinido. "
+>>>>>>> 0b6ef74 (Updated project files)
             f"Definindo como {working_crs}."
         )
         allowed_area.set_crs(working_crs, inplace=True)
@@ -240,9 +300,12 @@ def main():
     if allowed_area.empty:
         raise ValueError("No valid area remaining after exclusions!")
 
+<<<<<<< HEAD
     # ============================
     # Parâmetros temporais
     # ============================
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     start_time = datetime.fromtimestamp(args.start_timestamp)
     end_time = datetime.fromtimestamp(args.end_timestamp)
 
@@ -251,14 +314,21 @@ def main():
     allocation_plan = []
     total_ratio = 0.0
 
+<<<<<<< HEAD
     # ============================
     # Concentrações opcionais
     # ============================
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     for target in args.concentration_targets:
         parts = target.split(":")
         if len(parts) < 2:
             raise ValueError(
+<<<<<<< HEAD
                 f"Formato inválido em concentration_target: {target}"
+=======
+                f"Formato invalido em concentration_target: {target}"
+>>>>>>> 0b6ef74 (Updated project files)
             )
 
         path = parts[0]
@@ -282,21 +352,34 @@ def main():
         )
 
     if total_ratio > 1.0:
+<<<<<<< HEAD
         raise ValueError("Soma das concentrações excede 100%")
 
     # ============================
     # Geração dos pontos concentrados
     # ============================
+=======
+        raise ValueError("Soma das concentracoes excede 100%")
+
+>>>>>>> 0b6ef74 (Updated project files)
     for item in allocation_plan:
         path = item["path"]
         qtd = item["points"]
         mode = item["mode"]
 
+<<<<<<< HEAD
         print(f"🎯 Gerando {qtd} pontos em {path} com modo {mode}")
 
         if not os.path.exists(path):
             raise FileNotFoundError(
                 f"Arquivo de concentração não encontrado: {path}"
+=======
+        print(f"Gerando {qtd} pontos em {path} com modo {mode}")
+
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"Arquivo de concentracao nao encontrado: {path}"
+>>>>>>> 0b6ef74 (Updated project files)
             )
 
         shape = gpd.read_file(path).to_crs(working_crs)
@@ -328,29 +411,44 @@ def main():
 
         dataframes.append(df)
 
+<<<<<<< HEAD
     # ============================
     # Pontos restantes (fora das concentrações)
     # ============================
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     allocated_total = sum(item["points"] for item in allocation_plan)
     remaining = total_points - allocated_total
 
     if remaining > 0:
         print(
+<<<<<<< HEAD
             f"🔄 Gerando {remaining} pontos restantes "
             "fora das concentrações"
+=======
+            f"Gerando {remaining} pontos restantes fora das concentracoes."
+>>>>>>> 0b6ef74 (Updated project files)
         )
 
         if args.weighted_shapefile and os.path.exists(
             args.weighted_shapefile
         ):
             print(
+<<<<<<< HEAD
                 f"🧮 Usando shapefile ponderado: {args.weighted_shapefile}"
+=======
+                f"Usando shapefile ponderado: {args.weighted_shapefile}"
+>>>>>>> 0b6ef74 (Updated project files)
             )
 
             weights_gdf = gpd.read_file(args.weighted_shapefile)
             if weights_gdf.crs is None:
                 print(
+<<<<<<< HEAD
                     "⚠️  CRS do shapefile ponderado não definido. "
+=======
+                    "CRS do shapefile ponderado nao definido. "
+>>>>>>> 0b6ef74 (Updated project files)
                     f"Assumindo {working_crs}."
                 )
                 weights_gdf = weights_gdf.set_crs(allowed_area.crs)
@@ -359,7 +457,11 @@ def main():
 
             if "prob" not in weights_gdf.columns:
                 raise ValueError(
+<<<<<<< HEAD
                     "Shapefile ponderado não possui coluna 'prob'."
+=======
+                    "Shapefile ponderado nao possui coluna 'prob'."
+>>>>>>> 0b6ef74 (Updated project files)
                 )
 
             weights_gdf = weights_gdf[["prob", "geometry"]].copy()
@@ -369,8 +471,13 @@ def main():
 
             if weights_gdf.empty:
                 print(
+<<<<<<< HEAD
                     "⚠️  Shapefile ponderado sem probabilidades válidas. "
                     "Voltando para distribuição uniforme no allowed_area."
+=======
+                    "Shapefile ponderado sem probabilidades validas. "
+                    "Voltando para distribuicao uniforme em allowed_area."
+>>>>>>> 0b6ef74 (Updated project files)
                 )
                 df = insert_points_by_time(
                     allowed_area,
@@ -388,9 +495,15 @@ def main():
                 )
                 if weighted_area.empty:
                     print(
+<<<<<<< HEAD
                         "⚠️  Interseção entre área permitida e shapefile "
                         "ponderado é vazia. Voltando para distribuição "
                         "uniforme no allowed_area."
+=======
+                        "Intersecao entre area permitida e shapefile "
+                        "ponderado vazia. Voltando para distribuicao "
+                        "uniforme em allowed_area."
+>>>>>>> 0b6ef74 (Updated project files)
                     )
                     df = insert_points_by_time(
                         allowed_area,
@@ -401,6 +514,7 @@ def main():
                     )
                     dataframes.append(df)
                 else:
+<<<<<<< HEAD
                     probs = weighted_area["prob"].astype(float).clip(
                         lower=0
                     )
@@ -409,6 +523,15 @@ def main():
                         print(
                             "⚠️  Probabilidades na área intersectada somam "
                             "zero. Voltando para distribuição uniforme no "
+=======
+                    probs = weighted_area["prob"].astype(float).clip(lower=0)
+                    total_prob = probs.sum()
+
+                    if total_prob <= 0:
+                        print(
+                            "Probabilidades na area intersectada somam "
+                            "zero. Voltando para distribuicao uniforme em "
+>>>>>>> 0b6ef74 (Updated project files)
                             "allowed_area."
                         )
                         df = insert_points_by_time(
@@ -434,14 +557,22 @@ def main():
                             ).index
                             step = 1 if diff > 0 else -1
                             for idx in order[: abs(diff)]:
+<<<<<<< HEAD
                                 weighted_area.loc[idx, "points_alloc"] += (
                                     step
                                 )
+=======
+                                weighted_area.loc[idx, "points_alloc"] += step
+>>>>>>> 0b6ef74 (Updated project files)
 
                         for _, row in weighted_area.iterrows():
                             n_points = int(row["points_alloc"])
                             if n_points <= 0:
                                 continue
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0b6ef74 (Updated project files)
                             poly_gdf = gpd.GeoDataFrame(
                                 geometry=[row.geometry],
                                 crs=working_crs,
@@ -464,15 +595,23 @@ def main():
             )
             dataframes.append(df)
 
+<<<<<<< HEAD
     # ============================
     # Ajuste final se faltarem pontos
     # ============================
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     total_final = sum(len(df) for df in dataframes)
     deficit = total_points - total_final
     if deficit > 0:
         print(
+<<<<<<< HEAD
             f"⚠️ Regerando {deficit} pontos faltantes "
             f"para atingir {total_points}"
+=======
+            f"Regerando {deficit} pontos faltantes para atingir "
+            f"{total_points}."
+>>>>>>> 0b6ef74 (Updated project files)
         )
         df = insert_points_by_time(
             allowed_area,
@@ -483,9 +622,12 @@ def main():
         )
         dataframes.append(df)
 
+<<<<<<< HEAD
     # ============================
     # Consolidação e salvamento
     # ============================
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     if not dataframes:
         raise ValueError(
             "Nenhum ponto foi gerado (lista de dataframes vazia)."
@@ -511,17 +653,25 @@ def main():
         index=False,
     )
 
+<<<<<<< HEAD
     # ============================
     # Plot estático (PNG)
     # ============================
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     if allowed_area.crs.is_geographic:
         crs_plot = "EPSG:3857"
         allowed_plot = allowed_area.to_crs(crs_plot)
         gdf_plot = gdf_latlon.to_crs(crs_plot)
     else:
+<<<<<<< HEAD
         crs_plot = allowed_area.crs
         allowed_plot = allowed_area
         gdf_plot = gdf_latlon.to_crs(crs_plot)
+=======
+        allowed_plot = allowed_area
+        gdf_plot = gdf_latlon.to_crs(allowed_area.crs)
+>>>>>>> 0b6ef74 (Updated project files)
 
     fig, ax = plt.subplots(figsize=(8, 8))
 
@@ -546,11 +696,16 @@ def main():
     margin_x = 0.05 * dx
     margin_y = 0.05 * dy
 
+<<<<<<< HEAD
     extra_top = 2 * margin_y
     extra_bottom = 2 * margin_y
 
     bottom = miny - extra_bottom
     top = maxy + extra_top
+=======
+    bottom = miny - 2 * margin_y
+    top = maxy + 2 * margin_y
+>>>>>>> 0b6ef74 (Updated project files)
 
     ax.set_xlim(minx - margin_x, maxx + margin_x)
     ax.set_ylim(bottom, top)
@@ -566,7 +721,15 @@ def main():
         "",
         xy=(arrow_x, arrow_y_head),
         xytext=(arrow_x, arrow_y_tail),
+<<<<<<< HEAD
         arrowprops={"arrowstyle": "->", "color": "black", "linewidth": 1.5},
+=======
+        arrowprops={
+            "arrowstyle": "->",
+            "color": "black",
+            "linewidth": 1.5,
+        },
+>>>>>>> 0b6ef74 (Updated project files)
     )
     ax.text(
         arrow_x,
@@ -579,7 +742,10 @@ def main():
 
     scalebar_km = 2
     scalebar_len = scalebar_km * 1000.0
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0b6ef74 (Updated project files)
     sb_x0 = minx + dx * 0.3
     sb_y = bottom + 0.8 * margin_y
 
@@ -611,12 +777,18 @@ def main():
     plt.savefig(f"{output_path}map.png", dpi=300)
     plt.close()
 
+<<<<<<< HEAD
     # ============================
     # Plot interativo (HTML)
     # ============================
     allowed_area_latlon = allowed_area.to_crs("EPSG:4326")
 
     m = allowed_area_latlon.explore(
+=======
+    allowed_area_latlon = allowed_area.to_crs("EPSG:4326")
+
+    map_object = allowed_area_latlon.explore(
+>>>>>>> 0b6ef74 (Updated project files)
         color="white",
         edgecolor="black",
         height=600,
@@ -624,11 +796,16 @@ def main():
         style_kwds={"fillOpacity": 0.0},
     )
     gdf_latlon.explore(
+<<<<<<< HEAD
         m=m,
+=======
+        m=map_object,
+>>>>>>> 0b6ef74 (Updated project files)
         color="red",
         name="Pontos gerados",
         marker_kwds={"radius": 3, "fillOpacity": 0.8},
     )
+<<<<<<< HEAD
     m.save(f"{output_path}map.html")
 
     print("✅ Mapas gerados com sucesso!")
@@ -636,3 +813,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+=======
+    map_object.save(f"{output_path}map.html")
+
+    print("Mapas gerados com sucesso.")
+
+
+if __name__ == "__main__":
+    main()
+>>>>>>> 0b6ef74 (Updated project files)
