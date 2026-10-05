@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Point
 from shapely.ops import unary_union
+import shapely
 
 
 def insert_points_by_time(
@@ -17,21 +18,6 @@ def insert_points_by_time(
     temporal_comp: int,
 ) -> pd.DataFrame:
     """
-<<<<<<< HEAD
-    Gera até ``point_num`` pontos dentro do shapefile (uniforme na área),
-    com timestamps aleatórios entre ``start_time`` e ``end_time``.
-
-    ``temporal_comp`` é ignorado (mantido apenas por compatibilidade).
-
-    Se a área for vazia ou tiver bounds inválidos, retorna um DataFrame vazio.
-    """
-    # 1) Sanitizar geometria
-    if shapefile is None or shapefile.empty:
-        print("⚠️ Área vazia em insert_points_by_time; nenhum ponto gerado.")
-        return pd.DataFrame(
-            columns=["latitude", "longitude", "timestamp"]
-        )
-=======
     Gera até ``point_num`` pontos dentro do shapefile, com distribuição
     uniforme na área e timestamps aleatórios entre ``start_time`` e
     ``end_time``.
@@ -45,38 +31,11 @@ def insert_points_by_time(
     if shapefile is None or shapefile.empty:
         print("Area vazia em insert_points_by_time; nenhum ponto gerado.")
         return pd.DataFrame(columns=["latitude", "longitude", "timestamp"])
->>>>>>> 0b6ef74 (Updated project files)
 
     shapefile = shapefile[
         shapefile.geometry.notna() & ~shapefile.geometry.is_empty
     ]
     if shapefile.empty:
-<<<<<<< HEAD
-        print("⚠️ Todas as geometrias estão vazias; nenhum ponto gerado.")
-        return pd.DataFrame(
-            columns=["latitude", "longitude", "timestamp"]
-        )
-
-    # 2) Bounds seguros
-    minx, miny, maxx, maxy = shapefile.total_bounds
-    bounds = np.array([minx, miny, maxx, maxy], dtype=float)
-
-    if (
-        not np.isfinite(bounds).all()
-        or maxx <= minx
-        or maxy <= miny
-    ):
-        print(
-            "⚠️ Bounds inválidos em insert_points_by_time "
-            f"(minx={minx}, maxx={maxx}, miny={miny}, maxy={maxy}). "
-            "Nenhum ponto será gerado para esta área."
-        )
-        return pd.DataFrame(
-            columns=["latitude", "longitude", "timestamp"]
-        )
-
-    # 3) União das geometrias para teste de pertinência
-=======
         print("Todas as geometrias estao vazias; nenhum ponto gerado.")
         return pd.DataFrame(columns=["latitude", "longitude", "timestamp"])
 
@@ -91,24 +50,41 @@ def insert_points_by_time(
         )
         return pd.DataFrame(columns=["latitude", "longitude", "timestamp"])
 
->>>>>>> 0b6ef74 (Updated project files)
     geom_union = shapefile.unary_union
+
+    # Recortes estreitos e partes distantes tornam a rejeicao por bounds lenta.
+    # A triangulacao restrita preserva bordas e buracos do poligono.
+    bbox_area = (maxx - minx) * (maxy - miny)
+    if (
+        point_num > 0
+        and geom_union.area / bbox_area < 0.05
+        and hasattr(shapely, "constrained_delaunay_triangles")
+    ):
+        triangles = list(shapely.constrained_delaunay_triangles(geom_union).geoms)
+        triangles = [triangle for triangle in triangles if triangle.area > 0]
+        if triangles:
+            areas = np.array([triangle.area for triangle in triangles])
+            choices = np.random.choice(len(triangles), size=point_num, p=areas / areas.sum())
+            vertices = np.array([list(triangle.exterior.coords)[:3] for triangle in triangles])
+            selected = vertices[choices]
+            u = np.sqrt(np.random.random(point_num))
+            v = np.random.random(point_num)
+            coords = ((1 - u)[:, None] * selected[:, 0]
+                      + (u * (1 - v))[:, None] * selected[:, 1]
+                      + (u * v)[:, None] * selected[:, 2])
+            seconds = max((end_time - start_time).total_seconds(), 1)
+            return pd.DataFrame({
+                "latitude": coords[:, 1],
+                "longitude": coords[:, 0],
+                "timestamp": [start_time + timedelta(seconds=float(offset))
+                              for offset in np.random.uniform(0, seconds, point_num)],
+            })
 
     xs: list[float] = []
     ys: list[float] = []
     times: list[datetime] = []
 
-<<<<<<< HEAD
-    # total de segundos no intervalo de tempo
-    total_seconds = max(
-        (end_time - start_time).total_seconds(),
-        1,
-    )
-
-    # limite de tentativas para não travar se a área for muito pequena
-=======
     total_seconds = max((end_time - start_time).total_seconds(), 1)
->>>>>>> 0b6ef74 (Updated project files)
     max_tries = point_num * 1000
     tries = 0
 
@@ -117,15 +93,9 @@ def insert_points_by_time(
 
         x = float(np.random.uniform(minx, maxx))
         y = float(np.random.uniform(miny, maxy))
-<<<<<<< HEAD
-        p = Point(x, y)
-
-        if geom_union.contains(p):
-=======
         point = Point(x, y)
 
         if geom_union.contains(point):
->>>>>>> 0b6ef74 (Updated project files)
             xs.append(x)
             ys.append(y)
 
@@ -134,20 +104,6 @@ def insert_points_by_time(
 
     if len(xs) < point_num:
         print(
-<<<<<<< HEAD
-            f"⚠️ Só foi possível gerar {len(xs)} pontos de {point_num} "
-            f"solicitados após {tries} tentativas."
-        )
-
-    df = pd.DataFrame(
-        {
-            "latitude": ys,   # y
-            "longitude": xs,  # x
-            "timestamp": times,
-        }
-    )
-    return df
-=======
             f"So foi possivel gerar {len(xs)} pontos de {point_num} "
             f"solicitados apos {tries} tentativas."
         )
@@ -159,7 +115,6 @@ def insert_points_by_time(
             "timestamp": times,
         }
     )
->>>>>>> 0b6ef74 (Updated project files)
 
 
 def insert_points(
@@ -167,11 +122,7 @@ def insert_points(
     point_num: int,
     start_time: datetime,
     end_time: datetime,
-<<<<<<< HEAD
-) -> tuple[list, list, list]:
-=======
 ) -> tuple[list[float], list[float], list[str]]:
->>>>>>> 0b6ef74 (Updated project files)
     """
     Gera pontos aleatórios dentro do shapefile com timestamps.
 
@@ -183,17 +134,8 @@ def insert_points(
     times: list[str] = []
 
     while len(lat_points) < point_num:
-<<<<<<< HEAD
-        lon = float(
-            np.random.uniform(total_bounds[0], total_bounds[2])
-        )
-        lat = float(
-            np.random.uniform(total_bounds[1], total_bounds[3])
-        )
-=======
         lon = float(np.random.uniform(total_bounds[0], total_bounds[2]))
         lat = float(np.random.uniform(total_bounds[1], total_bounds[3]))
->>>>>>> 0b6ef74 (Updated project files)
         point = Point(lon, lat)
 
         if shapefile.contains(point).any():
@@ -206,14 +148,8 @@ def insert_points(
                 )
             )
             times.append(str(time))
-<<<<<<< HEAD
-            sys.stdout.write(
-                f"\r{len(lat_points)}/{point_num} points added."
-            )
-=======
             sys.stdout.write(f"\r{len(lat_points)}/{point_num} points added.")
 
->>>>>>> 0b6ef74 (Updated project files)
     return lat_points, lon_points, times
 
 
@@ -222,26 +158,6 @@ def create_allowed_area(
     exclusion_shapes: list[gpd.GeoDataFrame],
 ) -> gpd.GeoDataFrame:
     """
-<<<<<<< HEAD
-    Cria área permitida subtraindo exclusões do shapefile principal.
-
-    Inclui tratamento de geometrias lineares (rodovias etc.) com buffer.
-    """
-    main_shape = main_shape.to_crs("EPSG:3857")
-    buffered_geometries: list = []
-
-    print("🔹 Iniciando processamento de exclusões...")
-
-    total_shapes = len(exclusion_shapes)
-    for i, shape in enumerate(exclusion_shapes):
-        shape = shape.to_crs(main_shape.crs)
-        print(
-            f"  ↪ Processando shapefile {i + 1}/{total_shapes} "
-            f"com {len(shape)} geometrias..."
-        )
-
-        # Se houver coluna de classificação de rodovias, filtrar por tipos principais
-=======
     Cria a área permitida subtraindo exclusões do shapefile principal.
 
     Geometrias lineares são simplificadas e transformadas em buffers antes
@@ -260,7 +176,6 @@ def create_allowed_area(
             f"com {len(shape)} geometrias..."
         )
 
->>>>>>> 0b6ef74 (Updated project files)
         if "fclass" in shape.columns:
             shape = shape[
                 shape["fclass"].isin(
@@ -268,15 +183,6 @@ def create_allowed_area(
                 )
             ]
             print(
-<<<<<<< HEAD
-                "    • Após filtro de fclass: "
-                f"{len(shape)} geometrias restantes"
-            )
-
-        for j, geom in enumerate(shape.geometry):
-            if geom.geom_type in ["LineString", "MultiLineString"]:
-                simplified = geom.simplify(5)  # simplificar em 5 metros
-=======
                 "Apos filtro de fclass: "
                 f"{len(shape)} geometrias restantes"
             )
@@ -284,21 +190,10 @@ def create_allowed_area(
         for geom_index, geom in enumerate(shape.geometry, start=1):
             if geom.geom_type in ["LineString", "MultiLineString"]:
                 simplified = geom.simplify(5)
->>>>>>> 0b6ef74 (Updated project files)
                 buffered_geometries.append(simplified.buffer(10))
             else:
                 buffered_geometries.append(geom)
 
-<<<<<<< HEAD
-            if (j + 1) % 500 == 0:
-                print(f"    • {j + 1} geometrias processadas")
-
-    print(
-        f"✅ Total de {len(buffered_geometries)} "
-        "geometrias de exclusão acumuladas."
-    )
-    print("🔄 Unificando todas as geometrias em um único polígono...")
-=======
             if geom_index % 500 == 0:
                 print(f"{geom_index} geometrias processadas")
 
@@ -307,24 +202,16 @@ def create_allowed_area(
         "de exclusao acumuladas."
     )
     print("Unificando geometrias de exclusao...")
->>>>>>> 0b6ef74 (Updated project files)
 
     unioned = gpd.GeoDataFrame(
         geometry=[unary_union(buffered_geometries)],
         crs=main_shape.crs,
     )
 
-<<<<<<< HEAD
-    print("🔸 Iniciando operação espacial de exclusão (overlay)...")
-    allowed = gpd.overlay(main_shape, unioned, how="difference")
-
-    print("✅ Overlay finalizado. Retornando para EPSG:4326")
-=======
     print("Executando operacao espacial de diferenca...")
     allowed = gpd.overlay(main_shape, unioned, how="difference")
 
     print("Overlay finalizado. Retornando para EPSG:4326.")
->>>>>>> 0b6ef74 (Updated project files)
     return allowed.to_crs("EPSG:4326")
 
 
@@ -340,11 +227,7 @@ def generate_points_with_concentration(
     """
     Gera pontos priorizando uma área de concentração.
 
-<<<<<<< HEAD
-    Parte dos pontos cai na área de concentração, o restante na área
-=======
     Parte dos pontos é gerada na área de concentração e o restante na área
->>>>>>> 0b6ef74 (Updated project files)
     permitida como um todo.
     """
     concentration_area = gpd.overlay(
@@ -356,11 +239,7 @@ def generate_points_with_concentration(
     remaining_points = point_num - focused_points
 
     print(
-<<<<<<< HEAD
-        f"🎯 Gerando {focused_points} pontos concentrados e "
-=======
         f"Gerando {focused_points} pontos concentrados e "
->>>>>>> 0b6ef74 (Updated project files)
         f"{remaining_points} pontos restantes..."
     )
 
@@ -386,18 +265,7 @@ def generate_points_with_concentration(
 
 
 def out_dir(output_path: str) -> None:
-<<<<<<< HEAD
-    """
-    Cria diretório de saída se ele ainda não existir.
-
-    Parameters
-    ----------
-    output_path : str
-        Caminho do diretório de saída.
-    """
-=======
     """Cria o diretório de saída, caso ainda não exista."""
->>>>>>> 0b6ef74 (Updated project files)
     makedirs(output_path, exist_ok=True)
 
 
@@ -409,29 +277,10 @@ def build_circular_concentration_area(
     """
     Cria uma área de concentração circular baseada no centroide do shapefile.
 
-<<<<<<< HEAD
-    Parameters
-    ----------
-    shape : geopandas.GeoDataFrame
-        Geometrias de referência.
-    radius_m : float
-        Raio do círculo interno, em metros (no CRS projetado).
-    position : str
-        Uma das opções:
-        - "in": apenas o buffer interno
-        - "out": anel externo (buffer maior - buffer menor)
-        - "both": união das duas regiões
-
-    Returns
-    -------
-    geopandas.GeoDataFrame
-        Geometria(s) da área de concentração, em EPSG:4326.
-=======
     ``position`` pode ser:
     - "in": apenas o buffer interno
     - "out": anel externo
     - "both": união das duas regiões
->>>>>>> 0b6ef74 (Updated project files)
     """
     shape = shape.to_crs("EPSG:3857")
     center = shape.unary_union.centroid
@@ -458,16 +307,8 @@ def build_circular_concentration_area(
         )
     else:
         raise ValueError(
-<<<<<<< HEAD
-            "Posição inválida para concentração circular: "
-            f"{position}"
-        )
-
-    return result.to_crs("EPSG:4326")
-=======
             "Posicao invalida para concentracao circular: "
             f"{position}"
         )
 
     return result.to_crs("EPSG:4326")
->>>>>>> 0b6ef74 (Updated project files)

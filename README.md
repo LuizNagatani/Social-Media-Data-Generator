@@ -1,8 +1,92 @@
-<<<<<<< HEAD
-# Social-Media-Data-Generator
-SMDG is an ongoing project to finish my university computer engineering course.
-=======
 # Social Media Data Generator
+
+## Execução no Windows (PowerShell)
+
+Execute os comandos na pasta do repositório. Requer Python 3.10 ou superior.
+
+### 1. Instalar as dependências
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install geopandas pandas numpy matplotlib scipy libpysal esda mapclassify folium shapely pyogrio fiona
+```
+
+Os comandos abaixo usam o Python do ambiente virtual, sem exigir ativação.
+
+### 2. Preparar os dados
+
+Mantenha na raiz do projeto `Distrito-SP.zip`, `densidade-SP.zip` e
+`ipvs-SP.zip`. Não extraia nem remova os componentes internos dos ZIPs.
+Os três arquivos adicionados usam SIRGAS 2000 / UTM 23S (`EPSG:31983`).
+
+O regulador aceita `dd_hab_hec` ou calcula a densidade com
+`qt_populac / qt_area_he`. Na edição adicionada do GeoSampa, `qt_habitan`
+representa densidade; o código usa `qt_populac` como população.
+
+### 3. Gerar os pesos espaciais
+
+```powershell
+.\.venv\Scripts\python.exe regulator.py densidade-SP.zip ipvs-SP.zip --lambda-dens 0.5 --mu-ipvs 0.5 --out-prefix final-SP
+```
+
+Produz a pasta `final-SP` e `final-SP.zip`, com a coluna `prob`.
+Uma nova execução substitui essa pasta e o ZIP; reserve esse nome às saídas.
+
+### 4. Gerar pontos sem exclusões ou concentrações
+
+Para uma primeira execução sem pesos, use:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import runpy, sys; sys.argv = ['generator.py', '1000', '180', '1719304546', '1719701874', 'Distrito-SP.zip', '']; runpy.run_path('generator.py', run_name='__main__')"
+```
+
+Para usar os pesos produzidos no passo anterior:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import runpy, sys; sys.argv = ['generator.py', '10000', '180', '1719304546', '1719701874', 'Distrito-SP.zip', '', '--weighted_shapefile', 'final-SP.zip']; runpy.run_path('generator.py', run_name='__main__')"
+```
+
+O argumento vazio representa ausência de exclusões. O uso de `runpy` preserva
+esse argumento entre versões do PowerShell. Os números representam quantidade
+de pontos, componente temporal (atualmente ignorado), início e fim em timestamp
+Unix. Altere os timestamps para o intervalo desejado.
+
+As saídas são `output/points.csv`, `output/map.png` e `output/map.html`.
+Abra o HTML no navegador. Cada execução usa os mesmos nomes de saída.
+
+### 5. Comparar com dados reais (opcional)
+
+Disponibilize `tweets-reais.csv` com colunas `lat` e `lon`, em graus
+(`EPSG:4326`), e execute:
+
+```powershell
+Copy-Item output/points.csv points-sintetico.csv
+.\.venv\Scripts\python.exe agregador.py
+.\.venv\Scripts\python.exe comparador.py
+.\.venv\Scripts\python.exe validator.py
+```
+
+O agregador usa até 10.000 pontos reais e substitui `sp_aggregado.gpkg`.
+O comparador produz `comparacao_distritos.png`; o validador imprime Moran,
+Pearson e Kappa no terminal. Sem dados reais, encerre no passo 4.
+
+### Limitações atuais
+
+Se houver avisos de zero pontos após 1.000 tentativas, atualize o código e use
+Shapely 2.1 ou superior (`python -m pip install --upgrade shapely`). O gerador
+usa triangulação restrita para amostrar recortes estreitos, preservando buracos.
+Em versões antigas, permanece a amostragem por rejeição, que pode falhar nesses
+recortes.
+
+- `exec.sh` requer Bash e está configurado para exclusões que ainda não foram
+  adicionadas; use os comandos PowerShell acima para os três ZIPs disponíveis.
+- Camadas ponderadas com CRS definido são reprojetadas para a área principal.
+  Os arquivos adicionados compartilham o mesmo CRS.
+- Concentrações poligonais e circulares ainda têm problemas de conversão de
+  coordenadas; os exemplos acima não usam essa opção.
+- A estrutura dos ZIPs foi conferida; isso não garante validade de todas as
+  geometrias nem validação estatística dos resultados.
 
 Gerador de dados sintéticos georreferenciados para redes sociais baseadas em localização.
 
@@ -220,4 +304,3 @@ Guilherme Gabriel de Oliveira
 ## Licença
 
 Este projeto foi desenvolvido em contexto acadêmico. Recomenda-se consultar o trabalho final e a instituição para definir a forma mais adequada de reutilização e citação.
->>>>>>> 0b6ef74 (Updated project files)

@@ -1,0 +1,45 @@
+# Ambientes virtuais e caches Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Dados geograficos locais (incluindo componentes de shapefiles)
+*.zip
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.cst
+*.sbn
+*.sbx
+*.qix
+*.gpkg
+*.gpkg-shm
+*.gpkg-wal
+
+# Resultados gerados e dados de comparacao
+/output/
+/final-SP/
+/SP_regulated/
+/points-sintetico.csv
+/tweets-reais.csv
+/comparacao_distritos.png
+
+# Configuracoes e arquivos locais
+.vscode/
+.idea/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
